@@ -1,0 +1,32 @@
+# Jenkins controller + one agent (label: python), for Problem 15.
+# Start the controller first:   docker compose up -d jenkins
+# After creating node "agent-1": put its secret in .env, then:   docker compose up -d agent
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: controller.Dockerfile
+    container_name: jenkins-controller
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: agent.Dockerfile
+    container_name: jenkins-agent-1
+    depends_on:
+      - jenkins
+    environment:
+      JENKINS_URL: http://jenkins:8080
+      JENKINS_AGENT_NAME: agent-1
+      JENKINS_SECRET: ${AGENT_SECRET}
+      JENKINS_WEB_SOCKET: "true"
+      JENKINS_AGENT_WORKDIR: /home/jenkins/agent
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
